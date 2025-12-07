@@ -180,7 +180,7 @@ def call_gemini(question: str, results: dict) -> str:
         "Answer clearly and briefly, using the numbers where helpful."
     )
 
-    url = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent"
+    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
     params = {"key": api_key}
     payload = {
         "contents": [
