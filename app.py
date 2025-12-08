@@ -491,10 +491,7 @@ else:
     dv = results["diesel_vs_ev"]
     inp = results["inputs"]
     prof = results["charging_profile"]
-    
-def fmt(x):
-    return f"{x:,.0f}"
-    
+      
     def _fmt_eur(x): 
         return f"{x:,.0f} €"
 
