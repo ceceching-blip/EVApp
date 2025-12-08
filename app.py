@@ -4,9 +4,7 @@ import requests
 import streamlit as st
 import pandas as pd
 
-# --------------------------------------------------
 # 0) CONSTANTS
-# --------------------------------------------------
 
 DIESEL_CO2_PER_L = 2.64  # kg CO2 per litre
 
@@ -22,9 +20,7 @@ TOU_PRICE_EUR_PER_KWH = [
 ]
 
 
-# --------------------------------------------------
 # 1) MODEL
-# --------------------------------------------------
 
 def compute_flags_and_shares(start_hour: int, end_hour: int):
     flags = [0] * 24
@@ -102,7 +98,7 @@ def run_model(
     flags, shares = compute_flags_and_shares(start_h, end_h)
     charging_hours_by_clock = sum(flags)
 
-    # Energy (Excel-Style)
+    # Energy
     soc_diff = max(0.0, target_soc - start_soc)
     energy_per_event_kwh = battery_kwh * soc_diff
     energy_per_event_mwh = energy_per_event_kwh / 1000.0
@@ -275,9 +271,7 @@ if st.query_params.get("fleetmate") == "1":
         pass
 
 
-# --------------------------------------------------
 # 2) GEMINI CALL
-# --------------------------------------------------
 
 def _compact_for_llm(results: dict) -> dict:
     ec = results.get("energy_cost", {})
@@ -425,12 +419,11 @@ def call_gemini_assistant(user_msg: str, results: dict) -> dict:
 
 
 
-# --------------------------------------------------
 # 3) STREAMLIT UI
-# --------------------------------------------------
 
-st.set_page_config("EV vs Diesel (Excel-aligned) + Gemini", layout="wide")
-st.title("EV vs Diesel – Excel-aligned Calculator + Gemini Chat")
+
+st.set_page_config("Electric Vehicle Calculator", layout="wide")
+st.title("Electric Vehicle Calculator")
 
 if "model_results" not in st.session_state:
     st.session_state["model_results"] = None
@@ -500,10 +493,10 @@ else:
     prof = results["charging_profile"]
 
     def _fmt_eur(x): 
-        return f"{x:,.0f} €".replace(",", " ")
+        return f"{x:,.0f} €"
 
     def _fmt_kg(x):  
-        return f"{x:,.0f} kg".replace(",", " ")
+        return f"{x:,.0f} kg"
 
     def _recommendation(kind: str, text: str):
         # kind: "success" | "warning" | "info" | "error"
