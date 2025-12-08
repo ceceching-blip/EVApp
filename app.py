@@ -491,7 +491,10 @@ else:
     dv = results["diesel_vs_ev"]
     inp = results["inputs"]
     prof = results["charging_profile"]
-
+    
+def fmt(x):
+    return f"{x:,.0f}"
+    
     def _fmt_eur(x): 
         return f"{x:,.0f} €"
 
@@ -521,11 +524,11 @@ else:
     # ---- TOP: Executive KPIs (clean + fast) ----
     k1, k2, k3, k4 = st.columns(4)
     with k1:
-        st.metric("Total savings incl. toll (€ / year)", f"{dv['total_savings_incl_toll_eur']:.0f}")
+        st.metric("Total savings incl. toll (€ / year)", f"{dv['total_savings_incl_toll_eur']:,.0f}")
     with k2:
-        st.metric("CO₂ savings vs diesel (kg / year)", f"{dv['co2_savings_kg']:.0f}")
+        st.metric("CO₂ savings vs diesel (kg / year)", f"{dv['co2_savings_kg']:,.0f}")
     with k3:
-        st.metric("Annual energy (MWh)", f"{ec['annual_energy_mwh']:.0f}")
+        st.metric("Annual energy (MWh)", f"{ec['annual_energy_mwh']:,.0f}")
     with k4:
         st.metric("Capacity check", "OK ✅" if load["capacity_ok"] else "Exceeds ⚠️")
 
@@ -564,20 +567,20 @@ else:
 
         with c1:
             st.markdown("#### Fleet distance")
-            st.metric("km per truck per day", f"{dist['km_per_truck_per_day']:.1f}")
-            st.metric("annual km fleet", f"{dist['annual_km_fleet']:.0f}")
+            st.metric("km per truck per day", f"{dist['km_per_truck_per_day']:,.1f}")
+            st.metric("annual km fleet", f"{dist['annual_km_fleet']:,.0f}")
 
         with c2:
             st.markdown("#### Cost per km (excl. capex)")
             diesel_cost_per_km = dv["diesel_cost_baseline_eur"] / annual_km_safe
             ev_cost_per_km = ec["annual_cost_eur"] / annual_km_safe
-            st.metric("Diesel €/km", f"{diesel_cost_per_km:.3f}")
-            st.metric("EV electricity €/km", f"{ev_cost_per_km:.3f}")
+            st.metric("Diesel €/km", f"{diesel_cost_per_km:,.3f}")
+            st.metric("EV electricity €/km", f"{ev_cost_per_km:,.3f}")
 
         with c3:
             st.markdown("#### Charging + load")
-            st.metric("New theoretical peak (kW)", f"{load['new_theoretical_peak_kw']:.0f}")
-            st.metric("New avg load (kW)", f"{load['new_avg_load_kw']:.0f}")
+            st.metric("New theoretical peak (kW)", f"{load['new_theoretical_peak_kw']:,.0f}")
+            st.metric("New avg load (kW)", f"{load['new_avg_load_kw']:,.0f}")
 
         # quick comparison chart: €/km
         df_km = pd.DataFrame({
@@ -607,13 +610,13 @@ else:
         st.markdown("#### Annual costs")
         f1, f2, f3, f4 = st.columns(4)
         with f1:
-            st.metric("EV electricity cost (€)", f"{ec['annual_cost_eur']:.0f}")
+            st.metric("EV electricity cost (€)", f"{ec['annual_cost_eur']:,.0f}")
         with f2:
-            st.metric("Diesel baseline cost (€)", f"{dv['diesel_cost_baseline_eur']:.0f}")
+            st.metric("Diesel baseline cost (€)", f"{dv['diesel_cost_baseline_eur']:,.0f}")
         with f3:
-            st.metric("Cost savings (€)", f"{dv['cost_savings_eur']:.0f}")
+            st.metric("Cost savings (€)", f"{dv['cost_savings_eur']:,.0f}")
         with f4:
-            st.metric("Toll savings (€)", f"{dv['toll_savings_eur']:.0f}")
+            st.metric("Toll savings (€)", f"{dv['toll_savings_eur']:,.0f}")
 
         df_cost = pd.DataFrame({
             "Scenario": ["Diesel baseline", "EV electricity"],
@@ -649,11 +652,11 @@ else:
         st.markdown("#### Emissions comparison")
         e1, e2, e3 = st.columns(3)
         with e1:
-            st.metric("Effective grid CO₂ (kg/kWh)", f"{co2['effective_grid_co2_kg_per_kwh']:.3f}")
+            st.metric("Effective grid CO₂ (kg/kWh)", f"{co2['effective_grid_co2_kg_per_kwh']:,.3f}")
         with e2:
-            st.metric("EV CO₂ (kg / year)", f"{dv['ev_co2_kg']:.0f}")
+            st.metric("EV CO₂ (kg / year)", f"{dv['ev_co2_kg']:,.0f}")
         with e3:
-            st.metric("Diesel CO₂ (kg / year)", f"{dv['diesel_co2_baseline_kg']:.0f}")
+            st.metric("Diesel CO₂ (kg / year)", f"{dv['diesel_co2_baseline_kg']:,.0f}")
 
         df_co2 = pd.DataFrame({
             "Scenario": ["Diesel baseline", "EV (grid mix)"],
@@ -682,13 +685,13 @@ else:
 
         g1, g2, g3, g4 = st.columns(4)
         with g1:
-            st.metric("Existing site peak (kW)", f"{inp['existing_site_peak_kw']:.0f}")
+            st.metric("Existing site peak (kW)", f"{inp['existing_site_peak_kw']:,.0f}")
         with g2:
-            st.metric("Charging peak add (kW)", f"{load['total_charge_power_kw']:.0f}")
+            st.metric("Charging peak add (kW)", f"{load['total_charge_power_kw']:,.0f}")
         with g3:
-            st.metric("New theoretical peak (kW)", f"{load['new_theoretical_peak_kw']:.0f}")
+            st.metric("New theoretical peak (kW)", f"{load['new_theoretical_peak_kw']:,.0f}")
         with g4:
-            st.metric("Site capacity limit (kVA)", f"{inp['site_capacity_limit_kva']:.0f}")
+            st.metric("Site capacity limit (kVA)", f"{inp['site_capacity_limit_kva']:,.0f}")
 
         df_load = pd.DataFrame({
             "Value (kW/kVA)": [
