@@ -534,40 +534,41 @@ else:
     st.markdown("")
 
     # ---- TABS for structure ----
-    tab_overview, tab_finance, tab_emissions, tab_grid, tab_hourly, tab_recos, tab_details = st.tabs(
-    ["Overview", "Finance", "CO₂", "Grid / Load", "Hourly profile", "Recommendations", "Details"]
+    tab_overview, tab_finance, tab_emissions, tab_grid, tab_hourly, tab_solutions, tab_details = st.tabs(
+    ["Overview", "Finance", "CO₂", "Grid / Load", "Hourly profile", "Solutions", "Details"]
     )
 
-    with tab_recos:
-        st.markdown("## 📌 Quantitative recommendations")
 
-        recos = generate_recommendations(results)
+    issues = detect_issues(results)
+    solutions = generate_solution_set(results, issues)
 
-        if not recos:
-            st.success("No corrective actions required under the current assumptions.")
+    with tab_solutions:
+        st.markdown("## 🧭 Solution options")
+
+        if not issues:
+            st.success("No critical issues detected. Current configuration is technically and economically feasible.")
         else:
-            for r in recos:
-                with st.expander(f"🔹 {r['title']} ({r['category']}, {r['priority'].upper()})"):
-                    st.markdown(f"**What it is**  \n{r['definition']}")
-                    st.markdown(f"**Why this matters**  \n{r['reason']}")
+            st.markdown("### Detected issues")
+            for i in issues:
+                st.warning(i["description"])
 
-                    st.markdown("**Key numbers**")
-                    for k, v in r["quantitative"].items():
-                        label = k.replace("_", " ")
-                        if isinstance(v, float):
-                            st.write(f"- {label}: **{v:,.2f}**")
-                        else:
-                            st.write(f"- {label}: **{v}**")
+            st.markdown("### Recommended solution paths (ranked)")
+            for idx, s in enumerate(solutions, start=1):
+                with st.container(border=True):
+                    st.markdown(f"### {idx}. {s['name']}")
 
                     st.markdown("**Advantages**")
-                    for p in r["pros"]:
+                    for p in s["pros"]:
                         st.write(f"• {p}")
 
-                    st.markdown("**Disadvantages / trade-offs**")
-                    for c in r["cons"]:
+                    st.markdown("**Disadvantages**")
+                    for c in s["cons"]:
                         st.write(f"• {c}")
 
-                    st.markdown(f"**When to use**  \n{r['when_to_use']}")
+                    st.markdown("**Quantitative impact**")
+                    for k, v in s["quantitative_effect"].items():
+                        st.write(f"- {k.replace('_', ' ')}: **{v}**")
+
 
 
 
