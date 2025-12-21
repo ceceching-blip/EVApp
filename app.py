@@ -574,8 +574,8 @@ else:
         if total_savings > 0 and co2_savings > 0:
             _recommendation(
                 "success",
-                f"Under these assumptions, the Electric Vehicle setup is favourable if compared with diesel (OPEX). "
-                f"Total benefit including toll is {_fmt_eur(total_savings)} per year while the CO₂ reduction is {_fmt_kg(co2_savings)} per year."
+                f"Under these assumptions, the Electric Vehicle setup is favourable if compared with diesel (OPEX). ",
+                f"Total benefit including toll is {_fmt_eur(total_savings)} per year while the CO₂ reduction is {_fmt_kg(co2_savings)} per year.",
                 "Find more details on the subsequent tabs and recommendations/solutions for potential issues in "Solutions" tab."
             )
         elif total_savings > 0 and co2_savings <= 0:
