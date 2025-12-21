@@ -1,9 +1,4 @@
-# recommendations.py
-
-# =========================
 # ISSUE DETECTION
-# =========================
-
 def detect_issues(results):
     issues = []
 
@@ -38,11 +33,7 @@ def detect_issues(results):
 
     return issues
 
-
-# =========================
 # SOLUTION GENERATION
-# =========================
-
 def generate_solution_set(results, issues):
     load = results["load"]
     inp = results["inputs"]
@@ -51,9 +42,7 @@ def generate_solution_set(results, issues):
     issue_ids = {i["id"] for i in issues}
     solutions = []
 
-    # -------------------------------------------------
     # SOLUTION 1 — SMART CHARGING
-    # -------------------------------------------------
     if issue_ids & {"capacity_exceeded", "high_peak_concentration"}:
         solutions.append({
             "title": "Smart charging / load management",
@@ -83,9 +72,7 @@ def generate_solution_set(results, issues):
             "rank_score": 90
         })
 
-    # -------------------------------------------------
     # SOLUTION 2 — BATTERY ENERGY STORAGE
-    # -------------------------------------------------
     if issue_ids & {"capacity_exceeded", "high_peak_concentration"}:
         solutions.append({
             "title": "Battery energy storage (peak shaving)",
@@ -115,9 +102,7 @@ def generate_solution_set(results, issues):
             "rank_score": 70
         })
 
-    # -------------------------------------------------
     # SOLUTION 3 — REDUCE CHARGER POWER
-    # -------------------------------------------------
     if issue_ids & {"capacity_exceeded", "high_peak_concentration"}:
         reduced_power = max(inp["charger_power_per_truck_kw"] * 0.5, 50)
 
@@ -146,9 +131,7 @@ def generate_solution_set(results, issues):
             "rank_score": 65
         })
 
-    # -------------------------------------------------
     # SOLUTION 4 — GRID / TRANSFORMER UPGRADE
-    # -------------------------------------------------
     if "capacity_exceeded" in issue_ids:
         solutions.append({
             "title": "Grid connection / transformer upgrade",
@@ -176,9 +159,7 @@ def generate_solution_set(results, issues):
             "rank_score": 40
         })
 
-    # -------------------------------------------------
     # SOLUTION 5 — COST OPTIMISATION (BUSINESS CASE)
-    # -------------------------------------------------
     prof = results["charging_profile"]
     hours = list(range(24))
     prices = prof["tou_price_eur_per_kwh"]
@@ -231,12 +212,7 @@ def generate_solution_set(results, issues):
         )
     })
 
-
-    # =========================
-    # FINAL FILTER & SORT
-    # =========================
-
-    # Sort best → worst
+    # Sorting best to words
     solutions.sort(key=lambda x: x["rank_score"], reverse=True)
 
     return solutions[:3]  # max 3 shown
