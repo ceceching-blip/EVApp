@@ -40,7 +40,9 @@ def generate_solution_set(results, issues):
 
     # ---------- SOLUTION 1: Smart charging ----------
     solutions.append({
-        "name": "Smart charging / load management",
+        "title": "Smart charging / load management",
+        "category": "Grid / load",
+        "priority": "high",
         "rank_score": 90,
         "applicable_if": ["capacity_exceeded", "high_peak_concentration"],
         "pros": [
@@ -52,10 +54,11 @@ def generate_solution_set(results, issues):
             "Requires backend control system",
             "May increase charging time"
         ],
-        "quantitative_effect": {
+        "quantitative": {
             "peak_reduction_kw": load["required_shaving_kw"],
             "capex_level": "low"
-        }
+        },
+        "when_to_use": "Best first option when peaks exceed site capacity but flexibility exists."
     })
 
     # ---------- SOLUTION 2: Battery energy storage ----------
