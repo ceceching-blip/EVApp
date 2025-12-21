@@ -4,7 +4,7 @@ import requests
 import streamlit as st
 import pandas as pd
 from recommendations import detect_issues, generate_solution_set
-from report import generate_pdf_report
+from export import export_full_report_to_excel
 import os
 
 
@@ -927,15 +927,16 @@ if st.session_state.get("last_gemini_payload") and any(
 
 
 with st.sidebar:
-    if st.button("Export PDF report"):
-        path = "ev_report.pdf"
-        generate_pdf_report(results, path)
+    st.markdown("---")
+    if st.button("Export full report"):
+        path = "EV_Full_Report.xlsx"
+        export_full_report_to_excel(results, issues, solutions, path)
 
         with open(path, "rb") as f:
             st.download_button(
-                label="Download PDF",
+                label="Download Excel report",
                 data=f,
-                file_name="EV_Feasibility_Report.pdf",
-                mime="application/pdf"
+                file_name="EV_Full_Report.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             )
 
