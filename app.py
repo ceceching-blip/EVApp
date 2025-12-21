@@ -4,6 +4,9 @@ import requests
 import streamlit as st
 import pandas as pd
 from recommendations import detect_issues, generate_solution_set
+from report import generate_pdf_report
+import os
+
 
 # 0) CONSTANTS
 DIESEL_CO2_PER_L = 2.64  # kg CO2 per litre
@@ -921,4 +924,18 @@ if st.session_state.get("last_gemini_payload") and any(
     st.markdown("---")
     st.subheader("Last Gemini Request Payload")
     st.json(st.session_state["last_gemini_payload"])
+
+
+with st.sidebar:
+    if st.button("Export PDF report"):
+        path = "ev_report.pdf"
+        generate_pdf_report(results, path)
+
+        with open(path, "rb") as f:
+            st.download_button(
+                label="Download PDF",
+                data=f,
+                file_name="EV_Feasibility_Report.pdf",
+                mime="application/pdf"
+            )
 
