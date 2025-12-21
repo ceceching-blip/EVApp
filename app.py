@@ -3,7 +3,8 @@ import json
 import requests
 import streamlit as st
 import pandas as pd
-from recommendations import generate_recommendations
+from recommendations import detect_issues, generate_solution_set
+
 
 
 # 0) CONSTANTS
