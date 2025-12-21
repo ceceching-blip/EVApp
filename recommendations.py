@@ -9,7 +9,9 @@ def detect_issues(results):
 
     load = results["load"]
     dv = results["diesel_vs_ev"]
-
+    ec = results["energy_cost"]
+    prof = results["charging_profile"]
+    
     # Grid capacity exceeded
     if not load["capacity_ok"]:
         issues.append({
