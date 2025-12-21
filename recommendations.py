@@ -63,7 +63,7 @@ def generate_solution_set(results, issues):
 
     # ---------- SOLUTION 2: Battery energy storage ----------
     solutions.append({
-        "name": "Battery storage (peak shaving)",
+        "title": "Battery storage (peak shaving)",
         "rank_score": 70,
         "applicable_if": ["capacity_exceeded", "high_peak_concentration"],
         "pros": [
@@ -83,7 +83,7 @@ def generate_solution_set(results, issues):
 
     # ---------- SOLUTION 3: Grid / transformer upgrade ----------
     solutions.append({
-        "name": "Grid connection / transformer upgrade",
+        "title": "Grid connection / transformer upgrade",
         "rank_score": 50,
         "applicable_if": ["capacity_exceeded"],
         "pros": [
