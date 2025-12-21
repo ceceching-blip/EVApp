@@ -36,9 +36,10 @@ def generate_solution_set(results, issues):
     load = results["load"]
     inp = results["inputs"]
 
+    issue_ids = {i["id"] for i in issues}
     solutions = []
 
-    # -------- Derived severity metrics --------
+    # ---------- Common metrics ----------
     overload_kw = max(
         0.0,
         load["new_theoretical_peak_kw"] - inp["site_capacity_limit_kva"]
@@ -50,109 +51,103 @@ def generate_solution_set(results, issues):
         else 0.0
     )
 
-    # =========================
-    # SOLUTION 1: SMART CHARGING
-    # =========================
-    smart_score = 0
+    # ==================================================
+    # SOLUTION 1: Smart charging / staggering
+    # ==================================================
+    if "capacity_exceeded" in issue_ids or "high_peak_concentration" in issue_ids:
+        score = 60
+        if inp["charging_window_hours"] >= 8:
+            score += 20
+        if overload_ratio < 0.3:
+            score += 10
 
-    if overload_kw > 0:
-        smart_score += 40
-    if inp["charging_window_hours"] >= 8:
-        smart_score += 30
-    if overload_ratio < 0.3:
-        smart_score += 20
-    smart_score += 10  # low CAPEX bonus
+        solutions.append({
+            "title": "Smart charging / load staggering",
+            "rank_score": score,
+            "pros": [
+                "Lowest CAPEX",
+                "Immediate impact",
+                "No grid upgrade required"
+            ],
+            "cons": [
+                "Requires operational flexibility",
+                "May increase charging duration"
+            ],
+            "quantitative": {
+                "peak_reduction_kw": round(overload_kw, 1),
+                "charging_window_hours": inp["charging_window_hours"]
+            },
+            "when_to_use": "First-line solution when charging peaks are concentrated."
+        })
 
-    solutions.append({
-        "title": "Smart charging / load management",
-        "rank_score": smart_score,
-        "pros": [
-            "Lowest CAPEX",
-            "Fast to implement",
-            "No grid upgrade required"
-        ],
-        "cons": [
-            "Requires charging flexibility",
-            "May extend charging duration"
-        ],
-        "quantitative": {
-            "required_peak_reduction_kw": round(overload_kw, 1),
-            "charging_window_hours": inp["charging_window_hours"]
-        },
-        "when_to_use": "Best first option when overload is moderate and time flexibility exists."
-    })
+    # ==================================================
+    # SOLUTION 2: Reduce charger power / sequential charging
+    # ==================================================
+    if "high_peak_concentration" in issue_ids:
+        solutions.append({
+            "title": "Reduce charger power or stagger vehicles",
+            "rank_score": 55,
+            "pros": [
+                "Zero infrastructure CAPEX",
+                "Fast operational fix"
+            ],
+            "cons": [
+                "Longer charging sessions",
+                "Operational discipline required"
+            ],
+            "quantitative": {
+                "current_charger_power_kw": inp["charger_power_per_truck_kw"],
+                "fleet_size": inp["num_trucks"]
+            },
+            "when_to_use": "When grid capacity is sufficient but peaks are poorly distributed."
+        })
 
-    # =========================
-    # SOLUTION 2: BATTERY STORAGE
-    # =========================
-    battery_score = 0
+    # ==================================================
+    # SOLUTION 3: Battery energy storage
+    # ==================================================
+    if "capacity_exceeded" in issue_ids:
+        solutions.append({
+            "title": "Battery energy storage (peak shaving)",
+            "rank_score": 45,
+            "pros": [
+                "Physically caps peak demand",
+                "Improves resilience"
+            ],
+            "cons": [
+                "High CAPEX",
+                "Efficiency losses"
+            ],
+            "quantitative": {
+                "required_battery_kwh": round(load["required_battery_energy_kwh"], 1)
+            },
+            "when_to_use": "When smart charging alone cannot resolve overload."
+        })
 
-    if overload_kw > 0:
-        battery_score += min(overload_kw / 10, 40)
-    battery_score += 20  # technical robustness
-    battery_score -= 25  # CAPEX penalty
-
-    solutions.append({
-        "title": "Battery energy storage (peak shaving)",
-        "rank_score": battery_score,
-        "pros": [
-            "Physically reduces peak load",
-            "Improves resilience",
-            "Independent of charging behaviour"
-        ],
-        "cons": [
-            "High CAPEX",
-            "Efficiency losses"
-        ],
-        "quantitative": {
-            "required_battery_kwh": round(load["required_battery_energy_kwh"], 1)
-        },
-        "when_to_use": "When smart charging is insufficient or operational flexibility is limited."
-    })
-
-    # =========================
-    # SOLUTION 3: GRID UPGRADE
-    # =========================
-    grid_score = 0
-
-    if overload_ratio > 0.5:
-        grid_score += 60
-    elif overload_ratio > 0.3:
-        grid_score += 40
-    else:
-        grid_score += 10
-
-    grid_score -= 40  # cost + permitting penalty
-
-    solutions.append({
-        "title": "Grid connection / transformer upgrade",
-        "rank_score": grid_score,
-        "pros": [
-            "Permanent solution",
-            "Supports long-term fleet growth"
-        ],
-        "cons": [
-            "Very high CAPEX",
-            "Long lead time",
-            "Permitting required"
-        ],
-        "quantitative": {
-            "required_capacity_kva": round(load["new_theoretical_peak_kw"], 1),
-            "current_limit_kva": inp["site_capacity_limit_kva"]
-        },
-        "when_to_use": "When overload is structurally large or long-term expansion is planned."
-    })
-
-    # -------- Filter only applicable solutions --------
-    issue_ids = {i["id"] for i in issues}
-
-    applicable = []
-    for s in solutions:
-        if "capacity_exceeded" in issue_ids:
-            applicable.append(s)
+    # ==================================================
+    # SOLUTION 4: Grid / transformer upgrade
+    # ==================================================
+    if "capacity_exceeded" in issue_ids and overload_ratio > 0.3:
+        solutions.append({
+            "title": "Grid connection / transformer upgrade",
+            "rank_score": 30,
+            "pros": [
+                "Permanent solution",
+                "Supports long-term expansion"
+            ],
+            "cons": [
+                "Very high CAPEX",
+                "Permitting and long lead times"
+            ],
+            "quantitative": {
+                "required_capacity_kva": round(load["new_theoretical_peak_kw"], 1),
+                "current_limit_kva": inp["site_capacity_limit_kva"]
+            },
+            "when_to_use": "When overload is structural or fleet growth is planned."
+        })
 
     # -------- Rank best → worst --------
-    applicable.sort(key=lambda x: x["rank_score"], reverse=True)
+    solutions.sort(key=lambda x: x["rank_score"], reverse=True)
 
-    return applicable[:3]
+    return solutions[:3]
+
 
