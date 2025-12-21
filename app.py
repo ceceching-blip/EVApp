@@ -5,12 +5,8 @@ import streamlit as st
 import pandas as pd
 from recommendations import detect_issues, generate_solution_set
 
-
-
 # 0) CONSTANTS
-
 DIESEL_CO2_PER_L = 2.64  # kg CO2 per litre
-
 GRID_CO2_G_PER_KWH = [
     80, 78, 75, 70, 65, 60, 60, 65, 70, 75, 60, 50,
     45, 45, 50, 60, 70, 80, 90, 95, 90, 83, 78, 76
@@ -22,9 +18,7 @@ TOU_PRICE_EUR_PER_KWH = [
     0.23, 0.26, 0.30, 0.33, 0.31, 0.28, 0.24, 0.22
 ]
 
-
 # 1) MODEL
-
 def compute_flags_and_shares(start_hour: int, end_hour: int):
     flags = [0] * 24
     for h in range(24):
@@ -260,7 +254,7 @@ def recalc_from_state():
         peak_duration_h=st.session_state.get("peak_duration_h", 0.25),
     )
 
-# --- FleetMate open via query param ---
+# FleetMate
 if "assistant_is_open" not in st.session_state:
     st.session_state["assistant_is_open"] = False
 
@@ -275,7 +269,6 @@ if st.query_params.get("fleetmate") == "1":
 
 
 # 2) GEMINI CALL
-
 def _compact_for_llm(results: dict) -> dict:
     ec = results.get("energy_cost", {})
     co2 = results.get("co2", {})
@@ -350,7 +343,6 @@ def call_gemini_assistant(user_msg: str, results: dict) -> dict:
     compact = _compact_for_llm(results)
     current_inputs = {k: st.session_state.get(k) for k in sorted(ALLOWED_INPUT_KEYS)}
 
-    # STRICT JSON output request
     prompt = (
         "You are 'FleetMate', a cool, practical assistant for an EV-vs-Diesel fleet calculator.\n"
         "You ALWAYS reply in English.\n\n"
@@ -389,7 +381,6 @@ def call_gemini_assistant(user_msg: str, results: dict) -> dict:
 
     data = resp.json()
 
-    # robust text extraction
     try:
         cands = data.get("candidates", [])
         parts = cands[0].get("content", {}).get("parts", []) if cands else []
@@ -407,7 +398,6 @@ def call_gemini_assistant(user_msg: str, results: dict) -> dict:
         # fallback: show raw text
         return {"reply": text, "update_inputs": None, "show_payload": False}
 
-    # sanitize updates
     upd = obj.get("update_inputs", None)
     if isinstance(upd, dict):
         upd = {k: v for k, v in upd.items() if k in ALLOWED_INPUT_KEYS}
@@ -423,8 +413,6 @@ def call_gemini_assistant(user_msg: str, results: dict) -> dict:
 
 
 # 3) STREAMLIT UI
-
-
 st.set_page_config("Electric Vehicle Calculator", layout="wide")
 st.title("Electric Vehicle Calculator")
 
@@ -553,15 +541,15 @@ else:
             for i in issues:
                 st.warning(i["description"])
     
-            st.markdown("### Recommended solution paths (ranked)")
+            st.markdown("### Recommended Solution Paths")
             for idx, s in enumerate(solutions, start=1):
                 with st.container(border=True):
                     st.markdown(f"### {idx}. {s['title']}")
 
-                    st.markdown("**What it is**")
+                    st.markdown("**What it is?**")
                     st.write(s["definition"])
 
-                    st.markdown("**How to implement**")
+                    st.markdown("**How to implement?**")
                     for h in s["how_to"]:
                         st.write(f"• {h}")
 
@@ -586,20 +574,20 @@ else:
         if total_savings > 0 and co2_savings > 0:
             _recommendation(
                 "success",
-                f"Recommendation: Under these assumptions, the EV setup is favourable versus diesel (OPEX). "
-                f"Total benefit incl. toll: {_fmt_eur(total_savings)} per year; CO₂ reduction: {_fmt_kg(co2_savings)} per year."
+                f"Under these assumptions, the Electric Vehicle setup is favourable if compared with diesel (OPEX). "
+                f"Total benefit including toll is {_fmt_eur(total_savings)} per year while the CO₂ reduction is {_fmt_kg(co2_savings)} per year."
             )
         elif total_savings > 0 and co2_savings <= 0:
             _recommendation(
                 "warning",
-                f"Recommendation: Financially, EV looks positive (incl. toll: {_fmt_eur(total_savings)} per year), "
-                "but CO₂ is not better in this scenario — check the charging window / grid mix assumptions."
+                "Operating costs are lower for EVs under current assumptions; however, CO₂ emissions are not reduced. "
+                "This is driven by the assumed charging window and grid mix."
             )
         else:
             _recommendation(
                 "warning",
-                "Recommendation: Under the current assumptions, diesel is cheaper on OPEX. "
-                "Levers: electricity price/consumption, charging window (TOU), toll assumptions, realistic mileage."
+                "Under the current assumptions, diesel shows lower operating costs than Electric Vehicles. "
+                "This result is driven by electricity price, energy consumption, charging profile, and toll assumptions."
             )
 
 
@@ -622,7 +610,6 @@ else:
             st.metric("New theoretical peak (kW)", f"{load['new_theoretical_peak_kw']:,.0f}")
             st.metric("New avg load (kW)", f"{load['new_avg_load_kw']:,.0f}")
 
-        # quick comparison chart: €/km
         df_km = pd.DataFrame({
             "Scenario": ["Diesel (fuel only)", "EV (electricity only)"],
             "€/km": [diesel_cost_per_km, ev_cost_per_km]
@@ -636,14 +623,14 @@ else:
         if total_savings > 0:
             _recommendation(
                 "success",
-                f"Recommendation: The EV setup reduces variable costs versus diesel. "
-                f"Fuel/power delta: {_fmt_eur(cost_savings)} per year; incl. toll: {_fmt_eur(total_savings)} per year."
+                f"Cost comparison: The Electric Vehicle scenario results in lower variable operating costs than diesel "
+                f"Energy cost delta is {_fmt_eur(cost_savings)} per year, increasing to {_fmt_eur(total_savings)} per year when toll effects are included."
             )
         else:
             _recommendation(
                 "warning",
-                "Recommendation: Not an OPEX business case under the current assumptions. "
-                "Typical fixes: shift charging into cheaper hours, increase the dynamic share, sanity-check consumption."
+                 "Cost comparison: Under the current inputs, EV operating costs exceed the diesel baseline. "
+                "This outcome is sensitive to electricity price levels, charging timing, and vehicle energy consumption."
             )
 
 
@@ -678,14 +665,13 @@ else:
         if co2_savings > 0:
             _recommendation(
                 "success",
-                f"Recommendation: EV reduces CO₂ versus diesel by {_fmt_kg(co2_savings)} per year "
-                "(given your assumed grid profile and charging window)."
+                "Emissions comparison: The EV scenario reduces CO₂ emissions by "
+                f"{_fmt_kg(co2_savings)} per year, based on the assumed grid intensity and charging window."
             )
         else:
             _recommendation(
                 "warning",
-                "Recommendation: In this scenario, EV is not better on CO₂. "
-                "Levers: shift charging into lower-carbon hours (or assume green electricity / a PPA)."
+                "Emissions comparison: Under the current grid mix and charging window, EV charging does not reduce CO₂ emissions compared to diesel."
             )
 
 
@@ -711,14 +697,12 @@ else:
         if cap_ok:
             _recommendation(
                 "success",
-                "Recommendation: Site capacity appears sufficient. The EV setup is technically plausible without an immediate grid upgrade "
-                "(under the peak assumption)."
+                "Grid assessment: The site connection capacity is sufficient to accommodate EV charging under the assumed peak conditions."
             )
         else:
             _recommendation(
                 "error",
-                "Recommendation: Peak/load exceeds the connection limit. You’ll need load management (smart charging), "
-                "lower charger power, or a grid upgrade / peak shaving."
+                "Grid assessment: The combined site load exceeds the connection capacity under peak charging assumptions."
             )
 
         st.markdown("#### Site load and constraints")
@@ -772,21 +756,22 @@ else:
         if dyn_share <= 0.0:
             _recommendation(
                 "info",
-                "Recommendation: With dynamic_share=0, time-of-use pricing barely affects cost. "
-                "The charging window mainly matters for CO₂ optimisation."
+                "Charging window analysis: With dynamic pricing disabled, time-of-use effects have limited impact on energy cost. "
+                "The charging window mainly affects CO₂ intensity."
             )
         else:
             _recommendation(
                 "info",
-                f"Recommendation: If possible, shift charging into cheaper hours. "
-                f"Your current window covers {covered_price}/5 of the cheapest hours."
+                "Charging window analysis: The current charging window overlaps with "
+                f"{covered_price}/5 of the lowest-price hours."
             )
 
         _recommendation(
             "info",
-            f"CO₂ lever: Your current window covers {covered_co2}/5 of the lowest-CO₂ hours. "
-            f"Cheapest hours: {best_price_hours} | Lowest-CO₂ hours: {best_co2_hours}"
-        )
+            "Charging window CO₂ alignment: The current charging window overlaps with "
+            f"{covered_co2}/5 of the lowest-carbon hours. "
+            f"Lowest-price hours: {best_price_hours} | Lowest-CO₂ hours: {best_co2_hours}"    
+            )
 
 
         st.markdown("**Charging share by hour**")
