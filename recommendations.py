@@ -180,8 +180,6 @@ def generate_solution_set(results, issues):
     # SOLUTION 5 — COST OPTIMISATION (BUSINESS CASE)
     # -------------------------------------------------
     prof = results["charging_profile"]
-
-    # build hourly dataframe logic (same as hourly tab)
     hours = list(range(24))
     prices = prof["tou_price_eur_per_kwh"]
     co2 = prof["grid_co2_g_per_kwh"]
@@ -195,32 +193,44 @@ def generate_solution_set(results, issues):
 
     solutions.append({
         "title": "Shift charging to cheaper / lower-CO₂ hours",
-        "rank_score": 60,
+        "category": "Energy cost / CO₂",
+        "priority": "high",
+        "rank_score": 95,
         "applicable_if": [
             "negative_business_case",
-            "high_peak_concentration",
             "cost_optimisation_opportunity"
+        ],
+        "definition": (
+            "Adjust the charging start and end times so that EV charging happens "
+            "during hours with lower electricity prices and/or lower grid CO₂ intensity."
+        ),
+        "how_to": [
+            "Change charging start and end hours in the input panel",
+            "Align charging window with lowest TOU price hours",
+            "Prefer night-time or early-morning charging where possible"
         ],
         "pros": [
             "No CAPEX required",
-            "Immediate cost reduction",
-            "Can reduce CO₂ footprint"
+            "Immediate cost savings",
+            "Reduces CO₂ footprint"
         ],
         "cons": [
             "Requires operational flexibility",
             "May conflict with vehicle availability"
         ],
         "quantitative": {
-            "cheapest_hours": cheapest_hours,
-            "lowest_co2_hours": lowest_co2_hours,
-            "cheapest_hours_covered_now": f"{covered_cheapest}/5",
-            "lowest_co2_hours_covered_now": f"{covered_co2}/5"
+            "current_effective_price_eur_per_mwh": round(
+                results["energy_cost"]["effective_price_eur_per_mwh"], 1
+            ),
+            "cheapest_tou_price_eur_per_kwh": min(
+                results["charging_profile"]["tou_price_eur_per_kwh"]
+            )
         },
         "when_to_use": (
-            "Use when electricity cost or CO₂ intensity is driving poor results. "
-            "Adjust start/end charging hours to better align with low-price or low-CO₂ periods."
+            "Best when EV is more expensive than diesel and site capacity is sufficient."
         )
     })
+
 
     # =========================
     # FINAL FILTER & SORT
