@@ -194,7 +194,11 @@ def generate_solution_set(results, issues):
     solutions.append({
         "title": "Shift charging to cheaper / lower-CO₂ hours",
         "rank_score": 60,
-        "applicable_if": ["negative_business_case", "high_peak_concentration"],
+        "applicable_if": [
+            "negative_business_case",
+            "high_peak_concentration",
+            "cost_optimisation_opportunity"
+        ],
         "pros": [
             "No CAPEX required",
             "Immediate cost reduction",
