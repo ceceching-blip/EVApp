@@ -5,7 +5,7 @@ import streamlit as st
 import pandas as pd
 from recommendations import detect_issues, generate_solution_set
 from export import export_full_report_to_excel
-import os
+import tempfile
 
 
 # 0) CONSTANTS
@@ -929,14 +929,21 @@ if st.session_state.get("last_gemini_payload") and any(
 with st.sidebar:
     st.markdown("---")
     if st.button("Export full report"):
-        path = "EV_Full_Report.xlsx"
-        export_full_report_to_excel(results, issues, solutions, path)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp:
+            export_full_report_to_excel(
+                results=results,
+                issues=issues,
+                solutions=solutions,
+                filepath=tmp.name
+            )
+            tmp_path = tmp.name
 
-        with open(path, "rb") as f:
+        with open(tmp_path, "rb") as f:
             st.download_button(
-                label="Download Excel report",
-                data=f,
+                label="⬇️ Download Excel report",
+                data=f.read(),
                 file_name="EV_Full_Report.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             )
+
 
