@@ -3,6 +3,8 @@ import json
 import requests
 import streamlit as st
 import pandas as pd
+from recommendations import generate_recommendations
+
 
 # 0) CONSTANTS
 
@@ -532,9 +534,42 @@ else:
     st.markdown("")
 
     # ---- TABS for structure ----
-    tab_overview, tab_finance, tab_emissions, tab_grid, tab_hourly, tab_details = st.tabs(
-        ["Overview", "Finance", "CO₂", "Grid / Load", "Hourly profile", "Details"]
+    tab_overview, tab_finance, tab_emissions, tab_grid, tab_hourly, tab_recos, tab_details = st.tabs(
+    ["Overview", "Finance", "CO₂", "Grid / Load", "Hourly profile", "Recommendations", "Details"]
     )
+
+    with tab_recos:
+        st.markdown("## 📌 Quantitative recommendations")
+
+        recos = generate_recommendations(results)
+
+        if not recos:
+            st.success("No corrective actions required under the current assumptions.")
+        else:
+            for r in recos:
+                with st.expander(f"🔹 {r['title']} ({r['category']}, {r['priority'].upper()})"):
+                    st.markdown(f"**What it is**  \n{r['definition']}")
+                    st.markdown(f"**Why this matters**  \n{r['reason']}")
+
+                    st.markdown("**Key numbers**")
+                    for k, v in r["quantitative"].items():
+                        label = k.replace("_", " ")
+                        if isinstance(v, float):
+                            st.write(f"- {label}: **{v:,.2f}**")
+                        else:
+                            st.write(f"- {label}: **{v}**")
+
+                    st.markdown("**Advantages**")
+                    for p in r["pros"]:
+                        st.write(f"• {p}")
+
+                    st.markdown("**Disadvantages / trade-offs**")
+                    for c in r["cons"]:
+                        st.write(f"• {c}")
+
+                    st.markdown(f"**When to use**  \n{r['when_to_use']}")
+
+
 
     # =========================
     # TAB: OVERVIEW
