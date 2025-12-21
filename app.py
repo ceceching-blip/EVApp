@@ -518,7 +518,7 @@ else:
     with k3:
         st.metric("Annual energy (MWh)", f"{ec['annual_energy_mwh']:,.0f}")
     with k4:
-        st.metric("Capacity check", "OK ✅" if load["capacity_ok"] else "Exceeds ⚠️")
+        st.metric("Capacity check", "Adequate" if load["capacity_ok"] else "Exceeds")
 
     st.markdown("")
 
@@ -574,31 +574,26 @@ else:
         if total_savings > 0 and co2_savings > 0:
             _recommendation(
                 "success",
-                (
-                    f"Under these assumptions, the Electric Vehicle setup is favourable if compared with diesel (OPEX). ",
-                    f"Total benefit including toll is {_fmt_eur(total_savings)} per year while the CO₂ reduction is {_fmt_kg(co2_savings)} per year.",
-                    "Find more details on the subsequent tabs and recommendations/solutions for potential issues in \"Solutions\" tab."
+                f"Under these assumptions, the Electric Vehicle setup is favourable if compared with diesel (OPEX). "
+                f"Total benefit including toll is {_fmt_eur(total_savings)} per year,"
+                f"while the CO₂ reduction is {_fmt_kg(co2_savings)} per year."
+                "Find more details on the subsequent tabs and recommendations/solutions for potential issues in "Solutions" tab."
                 )
-            )
         elif total_savings > 0 and co2_savings <= 0:
             _recommendation(
                 "warning",
-                (
-                    "Operating costs are lower for EVs under current assumptions; however, CO₂ emissions are not reduced. "
-                    "This is driven by the assumed charging window and grid mix."
-                    "Find more details on the subsequent tabs and recommendations/solutions for potential issues in \"Solutions\" tab."
-                )
+                "Operating costs are lower for EVs under current assumptions; however, CO₂ emissions are not reduced. "
+                "This is driven by the assumed charging window and grid mix."
+                "Find more details on the subsequent tabs and recommendations/solutions for potential issues in "Solutions" tab."
             )
         else:
             _recommendation(
                 "warning",
-                (
-                    "Under the current assumptions, diesel shows lower operating costs than Electric Vehicles. "
-                    "This result is driven by electricity price, energy consumption, charging profile, and toll assumptions."
-                    "Find more details on the subsequent tabs and recommendations/solutions for potential issues in \"Solutions\" tab."
+                "Under the current assumptions, diesel shows lower operating costs than Electric Vehicles. "
+                "This result is driven by electricity price, energy consumption, charging profile, and toll assumptions."
+                "Find more details on the subsequent tabs and recommendations/solutions for potential issues in "Solutions" tab."
                 )
-            )
-
+        
         c1, c2, c3 = st.columns(3)
 
         with c1:
