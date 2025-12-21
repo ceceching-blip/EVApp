@@ -544,7 +544,7 @@ else:
     solutions = generate_solution_set(results, issues)
 
     with tab_solutions:
-        st.markdown("## 🧭 Solution options")
+        st.markdown("## Solution options")
 
         if not issues:
             st.success("No critical issues detected. Current configuration is technically and economically feasible.")
@@ -552,11 +552,18 @@ else:
             st.markdown("### Detected issues")
             for i in issues:
                 st.warning(i["description"])
-
+    
             st.markdown("### Recommended solution paths (ranked)")
             for idx, s in enumerate(solutions, start=1):
                 with st.container(border=True):
                     st.markdown(f"### {idx}. {s['title']}")
+
+                    st.markdown("**What it is**")
+                    st.write(s["definition"])
+
+                    st.markdown("**How to implement**")
+                    for h in s["how_to"]:
+                        st.write(f"• {h}")
 
                     st.markdown("**Advantages**")
                     for p in s["pros"]:
@@ -568,8 +575,7 @@ else:
 
                     st.markdown("**Quantitative impact**")
                     for k, v in s["quantitative"].items():
-                        st.write(f"- {k.replace('_', ' ')}: **{v}**")
-
+                        st.write(f"- {k.replace('_',' ')}: **{v}**")
 
 
 
