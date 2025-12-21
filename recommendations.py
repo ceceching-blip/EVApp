@@ -1,9 +1,10 @@
+# recommendations.py
+
 def detect_issues(results):
     issues = []
 
     load = results["load"]
     dv = results["diesel_vs_ev"]
-    ec = results["energy_cost"]
 
     # Capacity issue
     if not load["capacity_ok"]:
@@ -21,74 +22,114 @@ def detect_issues(results):
             "description": "EV operating costs are not lower than diesel under current assumptions."
         })
 
-    # Peak intensity issue (soft)
+    # Peak concentration issue
     if load["new_theoretical_peak_kw"] > 1.5 * load["new_avg_load_kw"]:
         issues.append({
             "id": "high_peak_concentration",
             "severity": "medium",
-            "description": "Charging demand is highly concentrated, increasing peak stress."
+            "description": "Charging demand is highly concentrated, creating peak stress."
         })
 
     return issues
-
+    
 def generate_solution_set(results, issues):
     load = results["load"]
     inp = results["inputs"]
-    ec = results["energy_cost"]
 
     solutions = []
 
-    # ---------- SOLUTION 1: Smart charging ----------
+    # -------- Derived severity metrics --------
+    overload_kw = max(
+        0.0,
+        load["new_theoretical_peak_kw"] - inp["site_capacity_limit_kva"]
+    )
+
+    overload_ratio = (
+        overload_kw / inp["site_capacity_limit_kva"]
+        if inp["site_capacity_limit_kva"] > 0
+        else 0.0
+    )
+
+    # =========================
+    # SOLUTION 1: SMART CHARGING
+    # =========================
+    smart_score = 0
+
+    if overload_kw > 0:
+        smart_score += 40
+    if inp["charging_window_hours"] >= 8:
+        smart_score += 30
+    if overload_ratio < 0.3:
+        smart_score += 20
+    smart_score += 10  # low CAPEX bonus
+
     solutions.append({
         "title": "Smart charging / load management",
-        "category": "Grid / load",
-        "priority": "high",
-        "rank_score": 90,
-        "applicable_if": ["capacity_exceeded", "high_peak_concentration"],
+        "rank_score": smart_score,
         "pros": [
-            "No grid upgrade required",
-            "Low CAPEX compared to infrastructure upgrades",
-            "Fast to implement"
+            "Lowest CAPEX",
+            "Fast to implement",
+            "No grid upgrade required"
         ],
         "cons": [
-            "Requires backend control system",
-            "May increase charging time"
+            "Requires charging flexibility",
+            "May extend charging duration"
         ],
         "quantitative": {
-            "peak_reduction_kw": load["required_shaving_kw"],
-            "capex_level": "low"
+            "required_peak_reduction_kw": round(overload_kw, 1),
+            "charging_window_hours": inp["charging_window_hours"]
         },
-        "when_to_use": "Best first option when peaks exceed site capacity but flexibility exists."
+        "when_to_use": "Best first option when overload is moderate and time flexibility exists."
     })
 
-    # ---------- SOLUTION 2: Battery energy storage ----------
+    # =========================
+    # SOLUTION 2: BATTERY STORAGE
+    # =========================
+    battery_score = 0
+
+    if overload_kw > 0:
+        battery_score += min(overload_kw / 10, 40)
+    battery_score += 20  # technical robustness
+    battery_score -= 25  # CAPEX penalty
+
     solutions.append({
-        "title": "Battery storage (peak shaving)",
-        "rank_score": 70,
-        "applicable_if": ["capacity_exceeded", "high_peak_concentration"],
+        "title": "Battery energy storage (peak shaving)",
+        "rank_score": battery_score,
         "pros": [
             "Physically reduces peak load",
             "Improves resilience",
-            "Future-proof for expansion"
+            "Independent of charging behaviour"
         ],
         "cons": [
             "High CAPEX",
             "Efficiency losses"
         ],
         "quantitative": {
-            "required_battery_kwh": load["required_battery_energy_kwh"],
-            "capex_level": "high"
-        }
+            "required_battery_kwh": round(load["required_battery_energy_kwh"], 1)
+        },
+        "when_to_use": "When smart charging is insufficient or operational flexibility is limited."
     })
 
-    # ---------- SOLUTION 3: Grid / transformer upgrade ----------
+    # =========================
+    # SOLUTION 3: GRID UPGRADE
+    # =========================
+    grid_score = 0
+
+    if overload_ratio > 0.5:
+        grid_score += 60
+    elif overload_ratio > 0.3:
+        grid_score += 40
+    else:
+        grid_score += 10
+
+    grid_score -= 40  # cost + permitting penalty
+
     solutions.append({
         "title": "Grid connection / transformer upgrade",
-        "rank_score": 50,
-        "applicable_if": ["capacity_exceeded"],
+        "rank_score": grid_score,
         "pros": [
             "Permanent solution",
-            "No operational constraints"
+            "Supports long-term fleet growth"
         ],
         "cons": [
             "Very high CAPEX",
@@ -96,19 +137,22 @@ def generate_solution_set(results, issues):
             "Permitting required"
         ],
         "quantitative": {
-            "required_capacity_kva": load["new_theoretical_peak_kw"],
-            "capex_level": "very high"
-        }
+            "required_capacity_kva": round(load["new_theoretical_peak_kw"], 1),
+            "current_limit_kva": inp["site_capacity_limit_kva"]
+        },
+        "when_to_use": "When overload is structurally large or long-term expansion is planned."
     })
 
-    # Filter only relevant solutions
+    # -------- Filter only applicable solutions --------
     issue_ids = {i["id"] for i in issues}
-    applicable = [
-        s for s in solutions
-        if any(i in issue_ids for i in s["applicable_if"])
-    ]
 
-    # Rank best → worst
+    applicable = []
+    for s in solutions:
+        if "capacity_exceeded" in issue_ids:
+            applicable.append(s)
+
+    # -------- Rank best → worst --------
     applicable.sort(key=lambda x: x["rank_score"], reverse=True)
 
-    return applicable[:3]  # max 3
+    return applicable[:3]
+
