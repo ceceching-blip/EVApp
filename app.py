@@ -556,7 +556,7 @@ else:
             st.markdown("### Recommended solution paths (ranked)")
             for idx, s in enumerate(solutions, start=1):
                 with st.container(border=True):
-                    st.markdown(f"### {idx}. {s['name']}")
+                    st.markdown(f"### {idx}. {s['title']}")
 
                     st.markdown("**Advantages**")
                     for p in s["pros"]:
@@ -567,7 +567,7 @@ else:
                         st.write(f"• {c}")
 
                     st.markdown("**Quantitative impact**")
-                    for k, v in s["quantitative_effect"].items():
+                    for k, v in s["quantitative"].items():
                         st.write(f"- {k.replace('_', ' ')}: **{v}**")
 
 
