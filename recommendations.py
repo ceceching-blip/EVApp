@@ -177,32 +177,44 @@ def generate_solution_set(results, issues):
     # -------------------------------------------------
     # SOLUTION 5 — COST OPTIMISATION (BUSINESS CASE)
     # -------------------------------------------------
-    if "negative_business_case" in issue_ids:
-        solutions.append({
-            "title": "Shift charging to cheaper / lower-CO₂ hours",
-            "definition": (
-                "Optimise charging schedule to benefit from lower electricity prices "
-                "and cleaner grid mix."
-            ),
-            "how_to": [
-                "Increase dynamic price share",
-                "Move charging window to night or midday",
-                "Align with TOU tariff structure"
-            ],
-            "pros": [
-                "No hardware investment",
-                "Immediate OPEX improvement"
-            ],
-            "cons": [
-                "Operational change required",
-                "May reduce flexibility"
-            ],
-            "quantitative": {
-                "current_annual_savings_eur": round(dv["total_savings_incl_toll_eur"], 0),
-                "capex_level": "none"
-            },
-            "rank_score": 85
-        })
+    prof = results["charging_profile"]
+
+    # build hourly dataframe logic (same as hourly tab)
+    hours = list(range(24))
+    prices = prof["tou_price_eur_per_kwh"]
+    co2 = prof["grid_co2_g_per_kwh"]
+    flags = prof["flags"]
+
+    cheapest_hours = sorted(range(24), key=lambda h: prices[h])[:5]
+    lowest_co2_hours = sorted(range(24), key=lambda h: co2[h])[:5]
+
+    covered_cheapest = sum(flags[h] for h in cheapest_hours)
+    covered_co2 = sum(flags[h] for h in lowest_co2_hours)
+
+    solutions.append({
+        "title": "Shift charging to cheaper / lower-CO₂ hours",
+        "rank_score": 60,
+        "applicable_if": ["negative_business_case", "high_peak_concentration"],
+        "pros": [
+            "No CAPEX required",
+            "Immediate cost reduction",
+            "Can reduce CO₂ footprint"
+        ],
+        "cons": [
+            "Requires operational flexibility",
+            "May conflict with vehicle availability"
+        ],
+        "quantitative": {
+            "cheapest_hours": cheapest_hours,
+            "lowest_co2_hours": lowest_co2_hours,
+            "cheapest_hours_covered_now": f"{covered_cheapest}/5",
+            "lowest_co2_hours_covered_now": f"{covered_co2}/5"
+        },
+        "when_to_use": (
+            "Use when electricity cost or CO₂ intensity is driving poor results. "
+            "Adjust start/end charging hours to better align with low-price or low-CO₂ periods."
+        )
+    })
 
     # =========================
     # FINAL FILTER & SORT
