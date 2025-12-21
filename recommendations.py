@@ -75,7 +75,7 @@ def generate_solution_set(results, issues):
             "High CAPEX",
             "Efficiency losses"
         ],
-        "quantitative_effect": {
+        "quantitative": {
             "required_battery_kwh": load["required_battery_energy_kwh"],
             "capex_level": "high"
         }
@@ -95,7 +95,7 @@ def generate_solution_set(results, issues):
             "Long lead time",
             "Permitting required"
         ],
-        "quantitative_effect": {
+        "quantitative": {
             "required_capacity_kva": load["new_theoretical_peak_kw"],
             "capex_level": "very high"
         }
