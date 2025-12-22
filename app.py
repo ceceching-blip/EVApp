@@ -523,8 +523,20 @@ else:
     with k4:
         st.metric("Capacity check", "Adequate" if load["capacity_ok"] else "Exceeds")
 
-    st.markdown("")
 
+    st.markdown("---")
+
+    if results is not None:
+        excel_bytes = build_excel_bytes(results, issues, solutions)
+
+        st.download_button(
+            label="Download full Excel report",
+            data=excel_bytes,
+            file_name="EV_Full_Report.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+
+    
     # ---- TABS for structure ----
     tab_overview, tab_finance, tab_emissions, tab_grid, tab_hourly, tab_solutions, tab_details = st.tabs(
     ["Overview", "Finance", "CO₂", "Grid / Load", "Hourly profile", "Solutions", "Details"]
@@ -938,17 +950,5 @@ def build_excel_bytes(results, issues, solutions):
     return buffer.read()
 
 
-with st.sidebar:
-    st.markdown("---")
-
-    if results is not None:
-        excel_bytes = build_excel_bytes(results, issues, solutions)
-
-        st.download_button(
-            label="Download full Excel report",
-            data=excel_bytes,
-            file_name="EV_Full_Report.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        )
 
 
