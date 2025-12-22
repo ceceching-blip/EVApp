@@ -4,8 +4,6 @@ import requests
 import streamlit as st
 import pandas as pd
 from recommendations import detect_issues, generate_solution_set
-from export import export_full_report_to_excel
-import io
 
 
 # 0) CONSTANTS
