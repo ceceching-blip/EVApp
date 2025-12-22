@@ -1,7 +1,8 @@
 import pandas as pd
 
 def export_full_report_to_excel(results, issues, solutions, filepath):
-    writer = pd.ExcelWriter(filepath, engine="xlsxwriter")
+    writer = pd.ExcelWriter(filepath, engine="xlsxwriter", engine_kwargs={"options": {"nan_inf_to_errors": True}})
+
 
     # ---------- INPUTS ----------
     pd.DataFrame.from_dict(
