@@ -5,7 +5,7 @@ import streamlit as st
 import pandas as pd
 from recommendations import detect_issues, generate_solution_set
 from export import export_full_report_to_excel
-import tempfile
+import io
 
 
 # 0) CONSTANTS
@@ -926,24 +926,29 @@ if st.session_state.get("last_gemini_payload") and any(
     st.json(st.session_state["last_gemini_payload"])
 
 
+def build_excel_bytes(results, issues, solutions):
+    buffer = io.BytesIO()
+    export_full_report_to_excel(
+        results=results,
+        issues=issues,
+        solutions=solutions,
+        filepath=buffer
+    )
+    buffer.seek(0)
+    return buffer.read()
+
+
 with st.sidebar:
     st.markdown("---")
-    if st.button("Export full report"):
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp:
-            export_full_report_to_excel(
-                results=results,
-                issues=issues,
-                solutions=solutions,
-                filepath=tmp.name
-            )
-            tmp_path = tmp.name
 
-        with open(tmp_path, "rb") as f:
-            st.download_button(
-                label="⬇️ Download Excel report",
-                data=f.read(),
-                file_name="EV_Full_Report.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            )
+    if results is not None:
+        excel_bytes = build_excel_bytes(results, issues, solutions)
+
+        st.download_button(
+            label="Download full Excel report",
+            data=excel_bytes,
+            file_name="EV_Full_Report.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
 
 
