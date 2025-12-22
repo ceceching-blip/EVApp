@@ -414,6 +414,16 @@ def call_gemini_assistant(user_msg: str, results: dict) -> dict:
     }
 
 
+def build_excel_bytes(results, issues, solutions):
+    buffer = io.BytesIO()
+    export_full_report_to_excel(
+        results=results,
+        issues=issues,
+        solutions=solutions,
+        filepath=buffer
+    )
+    buffer.seek(0)
+    return buffer.read()
 
 # 3) STREAMLIT UI
 st.set_page_config("Electric Vehicle Calculator", layout="wide")
@@ -936,18 +946,6 @@ if st.session_state.get("last_gemini_payload") and any(
     st.markdown("---")
     st.subheader("Last Gemini Request Payload")
     st.json(st.session_state["last_gemini_payload"])
-
-
-def build_excel_bytes(results, issues, solutions):
-    buffer = io.BytesIO()
-    export_full_report_to_excel(
-        results=results,
-        issues=issues,
-        solutions=solutions,
-        filepath=buffer
-    )
-    buffer.seek(0)
-    return buffer.read()
 
 
 
