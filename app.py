@@ -414,16 +414,6 @@ def call_gemini_assistant(user_msg: str, results: dict) -> dict:
     }
 
 
-def build_excel_bytes(results, issues, solutions):
-    buffer = io.BytesIO()
-    export_full_report_to_excel(
-        results=results,
-        issues=issues,
-        solutions=solutions,
-        filepath=buffer
-    )
-    buffer.seek(0)
-    return buffer.read()
 
 # 3) STREAMLIT UI
 st.set_page_config("Electric Vehicle Calculator", layout="wide")
@@ -534,17 +524,7 @@ else:
         st.metric("Capacity check", "Adequate" if load["capacity_ok"] else "Exceeds")
 
 
-    st.markdown("---")
-
-    if results is not None:
-        excel_bytes = build_excel_bytes(results, issues, solutions)
-
-        st.download_button(
-            label="Download full Excel report",
-            data=excel_bytes,
-            file_name="EV_Full_Report.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        )
+    st.markdown("")
 
     
     # ---- TABS for structure ----
